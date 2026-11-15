@@ -1,0 +1,39 @@
+services:
+  aetherforge:
+    build:
+      context: ..
+      dockerfile: platform/Dockerfile
+    container_name: aetherforge-studio
+    restart: unless-stopped
+    ports:
+      - "4100:4100"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "4100"
+      NODE_ENV: "production"
+      AETHERFORGE_DATA_DIR: "/app/platform/data"
+      AETHERFORGE_MASTER_KEY: "${AETHERFORGE_MASTER_KEY:-}"
+    volumes:
+      - aetherforge_data:/app/platform/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:4100/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aetherforge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-prod}
+      POSTGRES_DB: aetherforge
+    volumes:
+      - aetherforge_pg:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  aetherforge_data:
+  aetherforge_pg:
